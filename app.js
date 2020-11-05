@@ -1,134 +1,90 @@
-const express = require("express");
+const fs = require("fs");
 const path = require("path");
-
+const express = require("express");
 const app = express();
 
+const data = require("./data");
 app.use(express.static(path.join(__dirname, "public")));
 
+const head = ``;
+
 app.get("/", (req, res) => {
-  res.send(`
-  <html>
-  <link rel="stylesheet" href="css/style.css">
-    <body>
-      <h1>My Gear</h1>
-      <div>
-        <nav>
-          <a href="/">Home</a>
-          <a href="/leica-Q2">Leica Q2</a>
-          <a href="/sony-a7">Sony A7</a>
-          <a href="/nikon-d850">Nikon D850</a>
-      </nav>
-    </div>
-    </body> 
-  </html>
-  `);
-});
-
-app.get("/leica-Q2", (req, res) => {
-  res.send(`
-  <html>
-  <link rel="stylesheet" href="css/style.css">
-    <body>
-      <h1>Leica Q2</h1>
-      <div>
-        <p>
-        Main Features
-        47MP - Full frame CMOS Sensor
-        No Optical low-pass (anti-aliasing) filter
-        ISO 50 - 50000
-        28 mm f1.70 Prime Lens
-        Optical Image Stabilization
-        3 Fixed Type Screen
-        3680k dot Electronic viewfinder
-        20.0 fps continuous shooting
-        4K (UHD) - 3840 x 2160 video
-        Built-in Wireless
-        718g. 130 x 80 x 92 mm
-        Weather Sealed Body
-        Also known as Type No. 4889
-        </p>
-      </div>
-      <div>
-        <nav>
-          <a href="/">Home</a>
-          <a href="/leica-Q2">Leica Q2</a>
-          <a href="/sony-a7">Sony A7</a>
-          <a href="/nikon-d850">Nikon D850</a>
-      </nav>
-    </div>
-    </body> 
-  </html>
-  `);
-});
-
-app.get("/sony-a7", (req, res) => {
-  res.send(`
-  <html>
-  <link rel="stylesheet" href="css/style.css">
-    <body>
-      <h1>Sony A7</h1>
-      <div>
-        <p>
-        Main Features
-        42MP - Full frame BSI-CMOS Sensor
-        No Optical low-pass (anti-aliasing) filter
-        ISO 100 - 25600( expands to 50-102400)
-        5-axis Sensor-shift Image Stabilization
-        3 Tilting Screen
-        2359k dot Electronic viewfinder
-        5.0 fps continuous shooting
-        4K (UHD) - 3840 x 2160 video
-        Built-in Wireless
-        625g. 127 x 96 x 60 mm
-        Weather Sealed Body
-        </p>
-      </div>
-      <div>
-        <nav>
-          <a href="/">Home</a>
-          <a href="/leica-Q2">Leica Q2</a>
-          <a href="/sony-a7">Sony A7</a>
-          <a href="/nikon-d850">Nikon D850</a>
-      </nav>
-    </div>
-    </body> 
-  </html>
-  `);
-});
-
-app.get("/nikon-d850", (req, res) => {
-  res.send(`
-  <html>
-  <link rel="stylesheet" href="css/style.css">
-    <body>
-      <h1>Nikon D850</h1>
-      <div>
-        <p>
-        Main Features
-        46MP - Full frame BSI-CMOS Sensor
-        No Optical low-pass (anti-aliasing) filter
-        ISO 64 - 25600( expands to 32-102400)
-        3.2" Tilting Screen
-        Optical (pentaprism) viewfinder
-        7.0 fps continuous shooting
-        4K (UHD) - 3840 x 2160 video
-        Built-in Wireless
-        1015g. 146 x 124 x 79 mm
-        Weather Sealed Body
+  const html = `<!DOCTYPE html>
+  <html lang="en">
+  <head>
+      <title>Top Cameras</title>
+      <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+      <h1>Top Camera List</h1>
+        <div class="container">${data.cameras
+          .map(
+            (camera) => `<div class="content">
+        <h3><a href=/camera/${camera.cameraId}>${camera.name}</a></h3>
         
-        </p>
-      </div>
-      <div>
-        <nav>
-          <a href="/">Home</a>
-          <a href="/leica-Q2">Leica Q2</a>
-          <a href="/sony-a7">Sony A7</a>
-          <a href="/nikon-d850">Nikon D850</a>
-        </nav>
-      </div>
-    </body> 
+        </div>`
+          )
+          .join("")}
+  </body>
   </html>
-  `);
+  
+  `;
+  res.send(html);
+});
+
+app.get("/camera/:cameraId", (req, res) => {
+  const camera = data.cameras.find((c) => c.cameraId === req.params.cameraId);
+  if (!camera) {
+    throw new Error("Not Found");
+  }
+
+  const html = `<!DOCTYPE html>
+  <html>
+  <head>
+      <title>Top Cameras</title>
+      <link rel="stylesheet" href="/item.css" />
+  </head>
+  <body>
+      <div id="nav">
+        <ul>
+          <il><a href="/">Back</a>
+        </ul>
+      </div>
+      
+      <div id="camera-container">
+        <h1 id="camera-title">${camera.name}</h1>
+        <h3 id="camera-sub">${camera.description}</h3>
+        <p>Brand: ${camera.brand}</p>
+        <p>Price: ${camera.price}</p>
+      </div>
+
+  </body>
+  </html>`;
+  res.send(html);
+});
+
+app.use((err, req, res, next) => {
+  const html = `<!DOCTYPE html>
+  <html>
+  <head>
+    <title> My Cameras </title>
+    <link type="text/css" rel="stylesheet" href="/item.css" />
+  </head>
+    <body>
+      <div id="nav">
+        <ul>
+          <li><a href="/">Back</a></li>
+        </ul>
+      </div>
+      <div id="err-container">
+        <h1>Error 404</h1>
+        <p>This Camera WILL never exist!</p>
+      </div>
+    </body>
+  </html>
+  `;
+  res.status(404).send(html);
+  next(err);
 });
 
 app.listen(3000);
