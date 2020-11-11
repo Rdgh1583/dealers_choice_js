@@ -1,15 +1,22 @@
-const { client, syncAndSeed } = require("./db");
+const {
+  data,
+  syncAndSeed,
+  models: { User },
+} = require("./db");
 const express = require("express");
 const path = require("path");
 
 const app = express();
 
 app.use("/public", express.static(path.join(__dirname, "public")));
+// app.use("/Images", express.static(path.join(__dirname, "images")));
 
 app.get("/", async (req, res, next) => {
   try {
-    const response = await client.query("SELECT * FROM camera;");
-    const cameras = response.rows;
+    const cameras = await User.findAll();
+    console.log(cameras);
+    // const response = await client.query("SELECT * FROM camera;");
+    // const cameras = response.rows;
     const html = `<!DOCTYPE html>
   <html lang="en">
   <head>
@@ -18,7 +25,7 @@ app.get("/", async (req, res, next) => {
   </head>
   <body>
       <h1>Top Cameras</h1>
-      <div id='list'>
+      <div class='list'>
       <h3>List</h3>
         <ul>
           ${cameras
@@ -26,7 +33,8 @@ app.get("/", async (req, res, next) => {
               (camera) => `
             <li>
               <a href='cameras/${camera.id}'>
-                ${camera.model}
+                <h4 class='camera-model'>${camera.model}</h4>
+                
               </a>
             </li>`
             )
@@ -45,24 +53,25 @@ app.get("/", async (req, res, next) => {
 
 app.get("/cameras/:id", async (req, res, next) => {
   try {
-    const response = await client.query("SELECT * FROM camera WHERE id=$1;", [
-      req.params.id,
-    ]);
-    const camera = response.rows[0];
+    const camera = await User.findByPk(req.params.id);
+    // const response = await client.query("SELECT * FROM camera WHERE id=$1;", [
+    //   req.params.id,
+    // ]);
+    // const camera = response.rows[0];
     const html = `<!DOCTYPE html>
   <html>
   <head>
       <title>Top Cameras</title>
       <link rel="stylesheet" href="./public/item.css" />
-  </head>
+      </head>
   <body>
-      <div id="nav">
+      <div class="nav">
         <ul>
           <il><a href="/">Back</a>
         </ul>
       </div>
 
-      <div id="camera-container">
+      <div class="camera-container">
         <h1 id="camera-title">${camera.model}</h1>
         <h3 id="camera-sub">${camera.description}</h3>
         <p>Brand: ${camera.company}</p>
@@ -85,12 +94,12 @@ app.use((err, req, res, next) => {
     <link type="text/css" rel="stylesheet" href="/item.css" />
   </head>
     <body>
-      <div id="nav">
+      <div class="nav">
         <ul>
           <li><a href="/">Back</a></li>
         </ul>
       </div>
-      <div id="err-container">
+      <div class="err-container">
         <h1>Error 404</h1>
         <p>This Camera WILL never exist!</p>
       </div>
@@ -105,8 +114,9 @@ const port = process.env.PORT || 3000;
 
 const setUp = async () => {
   try {
-    await client.connect();
+    await data.authenticate();
     await syncAndSeed();
+    await User.findAll();
     console.log("connected");
     app.listen(port, () => console.log("listening on port 3000"));
   } catch (ex) {

@@ -4,6 +4,9 @@
 
 body {
   background-color: orange;
+  align-items: center;
+  flex-direction: column;
+  border: 1px solid black;
 }
 
 a {
