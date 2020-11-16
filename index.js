@@ -1,27 +1,32 @@
 const {
   data,
   syncAndSeed,
-  models: { User },
-} = require("./db");
+  models: { Model, Reviewer },
+} = require("./db/data");
 const express = require("express");
 const path = require("path");
 
 const app = express();
 
-app.use("/public", express.static(path.join(__dirname, "public")));
+app.use("/style.css", (req, res) =>
+  res.sendFile(path.join(__dirname, "style.css"))
+);
+app.use("/item.css", (req, res) =>
+  res.sendFile(path.join(__dirname, "item.css"))
+);
 // app.use("/Images", express.static(path.join(__dirname, "images")));
 
 app.get("/", async (req, res, next) => {
   try {
-    const cameras = await User.findAll();
-    console.log(cameras);
+    const cameras = await Model.findAll();
+
     // const response = await client.query("SELECT * FROM camera;");
     // const cameras = response.rows;
     const html = `<!DOCTYPE html>
   <html lang="en">
   <head>
       <title>Top Cameras</title>
-      <link rel="stylesheet" href="./public/style.css" />
+      <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
       <h1>Top Cameras</h1>
@@ -53,7 +58,13 @@ app.get("/", async (req, res, next) => {
 
 app.get("/cameras/:id", async (req, res, next) => {
   try {
-    const camera = await User.findByPk(req.params.id);
+    const camera = await Model.findByPk(req.params.id, { include: [Reviewer] });
+
+    // const camera = await Model.findByPk(req.params.id, { include: [Reviewer] });
+    console.log(camera.reviewer.name);
+    // const camera = await Model.findAll({ include: [Reviewer] });
+    // const rev = reviewer[0].model[0].id;
+    // console.log(rev);
     // const response = await client.query("SELECT * FROM camera WHERE id=$1;", [
     //   req.params.id,
     // ]);
@@ -62,7 +73,7 @@ app.get("/cameras/:id", async (req, res, next) => {
   <html>
   <head>
       <title>Top Cameras</title>
-      <link rel="stylesheet" href="./public/item.css" />
+      <link rel="stylesheet" href="/item.css" />
       </head>
   <body>
       <div class="nav">
@@ -73,6 +84,9 @@ app.get("/cameras/:id", async (req, res, next) => {
 
       <div class="camera-container">
         <h1 id="camera-title">${camera.model}</h1>
+        <div>
+          <h2 class="reviewer">Reviewed by: ${camera.reviewer.name}</h2>
+        </div>
         <h3 id="camera-sub">${camera.description}</h3>
         <p>Brand: ${camera.company}</p>
         <p>Price: ${camera.price}</p>
@@ -91,7 +105,7 @@ app.use((err, req, res, next) => {
   <html>
   <head>
     <title> My Cameras </title>
-    <link type="text/css" rel="stylesheet" href="/item.css" />
+    <link rel="stylesheet" href="./public/style.css" />
   </head>
     <body>
       <div class="nav">
@@ -116,7 +130,7 @@ const setUp = async () => {
   try {
     await data.authenticate();
     await syncAndSeed();
-    await User.findAll();
+    // await Model.findAll();
     console.log("connected");
     app.listen(port, () => console.log("listening on port 3000"));
   } catch (ex) {

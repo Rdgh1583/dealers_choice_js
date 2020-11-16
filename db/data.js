@@ -1,10 +1,27 @@
 const Sequelize = require("sequelize");
-const { STRING, TEXT } = Sequelize;
+const { STRING, TEXT, UUID, UUIDV4 } = Sequelize;
 const data = new Sequelize(
   process.env.DATABASE_URL || "postgres://localhost/cameras_db"
 );
 
-const User = data.define("User", {
+const Reviewer = data.define("reviewer", {
+  id: {
+    type: UUID,
+    primaryKey: true,
+    defaultValue: UUIDV4,
+  },
+  name: {
+    type: STRING(20),
+    allowNull: false,
+  },
+});
+
+const Model = data.define("model", {
+  id: {
+    type: UUID,
+    primaryKey: true,
+    defaultValue: UUIDV4,
+  },
   model: {
     type: STRING,
     allowNull: false,
@@ -23,42 +40,53 @@ const User = data.define("User", {
   },
 });
 
+Model.belongsTo(Reviewer);
+Reviewer.hasMany(Model);
+
 const syncAndSeed = async () => {
   await data.sync({ force: true });
-  await User.create({
+  const [rommel, jessica] = await Promise.all(
+    ["rommel", "jessica"].map((name) => Reviewer.create({ name }))
+  );
+  await Model.create({
     model: "Sony A7 III",
     description:
       "The Sony a7 III is an entry-level full-frame camera that goes well beyond the basics in features, with excellent image quality, 10fps subject tracking, and 4K video capture.",
     price: "$1698",
     company: "Sony",
+    reviewerId: jessica.id,
   });
-  await User.create({
+  await Model.create({
     model: "Fujifilm X-T30",
     description:
       "The Fujifilm X-T30 is a dial-based controls are appealing to enthusiasts and pros, and it backs them up with speedy, accurate focus, 4K video, and a strong lens library.",
     price: "$1699",
     company: "Fujifilm",
+    reviewerId: jessica.id,
   });
-  await User.create({
+  await Model.create({
     model: "Sony a6400",
     description:
       "The Sony a6400 is a camera that straddles the line between consumer and enthusiast, delivering automatic operation for family snapshots with the image quality and speed aficionados love.",
     price: "$898",
     company: "Sony",
+    reviewerId: jessica.id,
   });
-  await User.create({
+  await Model.create({
     model: "Fujifilm X-T30",
     description:
       "The Fujifilm X-T30 is a dial-based controls are appealing to enthusiasts and pros, and it backs them up with speedy, accurate focus, 4K video, and a strong lens library.",
     price: "$899",
     company: "Fujifilm",
+    reviewerId: rommel.id,
   });
-  await User.create({
+  await Model.create({
     model: "Canon PowerShot G5 X Mark II",
     description:
       "The Canon PowerShot G5 X Mark II is a pocket camera that will make enthusiasts happy, with a solid zoom range, a 1-inch sensor, and an electronic viewfinder.",
     price: "$898",
     company: "Canon",
+    reviewerId: rommel.id,
   });
 };
 
@@ -66,7 +94,8 @@ module.exports = {
   data,
   syncAndSeed,
   models: {
-    User,
+    Model,
+    Reviewer,
   },
 };
 
